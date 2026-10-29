@@ -27,32 +27,6 @@ Install the remaining dependencies with:
 pip install -r requirements.txt
 ```
 
-## 📂 Dataset
-
-### Dataset Structure
-
-Set `--data-root` to the root directory of the processed **LMT_108** dataset. The loader expects the following directory structure:
-
-```text
-LMT_108/
-└── AccelScansComponents/
-    └── Tapping/
-        ├── Training/
-        │   └── *.txt
-        └── Testing/
-            └── *.txt
-```
-
-### Data Processing
-
-The data pipeline follows these steps:
-
-1. **Signal selection:** Load tapping-Z recordings from both the `Training` and `Testing` directories.
-2. **Recording-level split:** Create a seeded, material-stratified 70/30 train/test split by recording.
-3. **Window generation:** Divide recordings into 256-sample windows, ignoring incomplete trailing samples.
-
-The recording-level split is performed before window generation to keep windows from the same recording within the same split.
-
 ## 🚀 Training
 
 ### Single Compression Ratio
@@ -85,78 +59,7 @@ Replace `/path/to/LMT_108` with the actual path to your dataset.
 | Signal Window Length | 256 samples |
 | Evaluation Metric | ST-SIM |
 
-The linear signal path is initialized using PCA fitted exclusively on training recordings.
 
-### Training Window Policy
-
-By default, training uses one randomly selected window per recording per epoch. To train on every nonoverlapping window instead, set the window policy to `grid`:
-
-```bash
-python main_tactile_JSCC.py \
-    --data-root /path/to/LMT_108 \
-    --output-root runs/lmt108 \
-    --compression-ratio 32 \
-    --train-window-policy grid
-```
-
-### Batch Training Across Compression Ratios
-
-To run experiments with compression ratios of **2, 4, 8, 16, 32, and 48**, execute:
-
-```bash
-TACTILE_DATA_ROOT=/path/to/LMT_108 \
-TACTILE_OUTPUT_ROOT=runs/lmt108 \
-bash scripts/run_lmt108_ratios.sh
-```
-
-To use grid-window training for the batch experiments:
-
-```bash
-TACTILE_TRAIN_WINDOW_POLICY=grid \
-TACTILE_DATA_ROOT=/path/to/LMT_108 \
-TACTILE_OUTPUT_ROOT=runs/lmt108 \
-bash scripts/run_lmt108_ratios.sh
-```
-
-Ensure the environment variables are set correctly before launching the script.
-
-## 💾 Checkpoints and Outputs
-
-Each run saves its configuration, data split, training history, checkpoint, and test results under the specified output directory.
-
-```text
-runs/lmt108/
-└── cr_<ratio>/
-    ├── config.json
-    ├── split.json
-    ├── history.jsonl
-    ├── last.pt
-    ├── best.pt        # Saved when validation is enabled
-    └── test.json
-```
-
-| File | Description |
-|:---|:---|
-| `config.json` | Training configuration |
-| `split.json` | Recording-level train/test split |
-| `history.jsonl` | Training history |
-| `last.pt` | Latest model checkpoint |
-| `best.pt` | Best validation-loss checkpoint, when enabled |
-| `test.json` | Test evaluation results |
-
-### Resume Training
-
-To resume an interrupted run, pass `--resume` with the same training settings:
-
-```bash
-python main_tactile_JSCC.py \
-    --data-root /path/to/LMT_108 \
-    --output-root runs/lmt108 \
-    --compression-ratio 32 \
-    --resume
-```
-
-When `--validation-fraction` is greater than zero, the best validation-loss checkpoint is also saved as `best.pt`.
 
 ## 📄 Citation
 
